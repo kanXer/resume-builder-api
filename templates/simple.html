@@ -10,21 +10,21 @@
     
     /* Content density ke basis par spacing control logic */
     {% if section_spacing == 'high' %}
-        --section-margin: 24px;
+        --section-margin: 20px;
         --item-spacing: 10px;
         --line-height: 1.6;
         --top-margin: 15mm;
     {% elif section_spacing == 'medium' %}
-        --section-margin: 16px;
+        --section-margin: 10px;
         --item-spacing: 6px;
         --line-height: 1.4;
         --top-margin: 10mm;
     {% else %}
         /* 'low' spacing: Jab characters 1800 se zyada hon */
-        --section-margin: 10px;
+        --section-margin: 5px;
         --item-spacing: 3px;
         --line-height: 1.2;
-        --top-margin: 7mm;
+        --top-margin: 4mm;
     {% endif %}
 }
 
@@ -210,3 +210,4 @@ p { margin: 5px 0; }
 
 </body>
 </html>
+
