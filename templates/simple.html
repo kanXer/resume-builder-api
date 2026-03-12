@@ -1,36 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-
 <style>
 :root {
-    /* Python se aane wala dynamic size */
-    --base-size: {{ base_font_size if base_font_size else '12pt' }};
+    --base-size: {{ base_font_size if base_font_size else '11pt' }};
     
-    /* Content density ke basis par spacing control logic */
     {% if section_spacing == 'high' %}
-        --section-margin: 20px;
-        --item-spacing: 10px;
-        --line-height: 1.6;
-        --top-margin: 15mm;
+        --section-gap: 20px;
+        --item-gap: 8px;
+        --line-height: 1.5;
     {% elif section_spacing == 'medium' %}
-        --section-margin: 5px;
-        --item-spacing: 3px;
-        --line-height: 1.4;
-        --top-margin: 5mm;
+        --section-gap: 12px;
+        --item-gap: 4px;
+        --line-height: 1.3;
     {% else %}
-        /* 'low' spacing: Jab characters 1800 se zyada hon */
-        --section-margin: 2.5px;
-        --item-spacing: 1.5px;
-        --line-height: 1.2;
-        --top-margin: 4mm;
+        --section-gap: 6px;
+        --item-gap: 2px;
+        --line-height: 1.15;
     {% endif %}
 }
 
 @page {
     size: A4;
-    margin: var(--top-margin) 15mm 12mm 15mm;
+    margin: 10mm 15mm;
 }
 
 body {
@@ -43,77 +36,69 @@ body {
 }
 
 h1.resume-title {
-    margin-top: 0;
-    margin-bottom: 4px;
+    margin: 0 0 5px 0;
     text-align: center;
     text-transform: uppercase;
-    font-size: calc(var(--base-size) + 6pt);
+    font-size: calc(var(--base-size) + 4pt);
 }
 
 .header {
     text-align: center;
-    margin-bottom: var(--section-margin);
+    margin-bottom: var(--section-gap);
     border-bottom: 2px solid #000;
-    padding-bottom: 10px;
+    padding-bottom: 8px;
 }
 
 .name {
     font-weight: bold;
     font-size: calc(var(--base-size) + 2pt);
+    margin-bottom: 2px;
 }
 
 .section {
-    margin-top: var(--section-margin);
+    margin-bottom: var(--section-gap);
     page-break-inside: avoid;
 }
 
 .title {
     font-weight: bold;
-    font-size: var(--base-size);
-    border-bottom: 1.5px solid #444;
+    border-bottom: 1.2px solid #333;
     padding-bottom: 2px;
-    margin-bottom: var(--item-spacing);
+    margin-bottom: var(--item-gap);
     text-transform: uppercase;
-    color: #222;
 }
 
 ul {
-    margin: 5px 0 0 20px;
+    margin: 0 0 0 18px;
     padding: 0;
 }
 
 li {
-    margin-bottom: calc(var(--item-spacing) / 2);
+    margin-bottom: calc(var(--item-gap) / 1.5);
 }
 
-p { margin: 5px 0; }
+p { 
+    margin: 0; 
+}
 
 .footer {
-    margin-top: 20px;
+    margin-top: 15px;
     text-align: right;
-    font-size: 10pt;
-    color: #666;
+    font-size: 9pt;
     border-top: 1px solid #eee;
     padding-top: 5px;
 }
 </style>
 </head>
-
 <body>
 
 <h1 class="resume-title">Resume</h1>
 
 <div class="header">
-    <div class="name"><b>{{name}}</b></div>
-    <div class="address">
-        {{address_line1}}
-        {% if address_line2 %}<br>{{address_line2}}{% endif %}
-    </div>
-    <div class="contact">
-        Mob: {{phone}} | Email: {{email}} 
-        {% if github %}
-        <span class="contact-item"> | 🔗 Github: {{github}}</span>
-        {% endif %}
+    <div class="name">{{name}}</div>
+    <div>
+        Mob: {{phone}} | Email: {{email}}
+        {% if github %} | Github: {{github}}{% endif %}
     </div>
 </div>
 
@@ -125,78 +110,41 @@ p { margin: 5px 0; }
 <div class="section">
     <div class="title">EDUCATION</div>
     <ul>
-        {% for edu in education %}
-        <li>
-            <b>{{edu.degree}}</b>, {{edu.college}}, {{edu.year}} – {{edu.score}}
-        </li>
-        {% endfor %}
+        {%- for edu in education -%}
+        <li><b>{{edu.degree}}</b>, {{edu.college}} ({{edu.year}}) – {{edu.score}}</li>
+        {%- endfor -%}
     </ul>
 </div>
 
-{% if skills and skills is iterable %}
-    {% set ns = namespace(has_data=false) %}
-    {% for s in skills %}{% if s and s|string|trim %}{% set ns.has_data = true %}{% endif %}{% endfor %}
-
-    {% if ns.has_data %}
-    <div class="section">
-        <div class="title">TECHNICAL SKILLS</div>
-        <ul>
-            {% for skill in skills %}
-                {% if skill and skill|string|trim %}
-                    <li>{{ skill }}</li>
-                {% endif %}
-            {% endfor %}
-        </ul>
+{% if skills %}
+<div class="section">
+    <div class="title">TECHNICAL SKILLS</div>
+    <p>{{ skills | join(', ') }}</p> 
     </div>
-    {% endif %}
 {% endif %}
 
-{% if experience and experience|length > 0 %}
+{% if experience %}
 <div class="section">
     <div class="title">WORK EXPERIENCE</div>
-    {% for job in experience %}
-    <div style="margin-bottom: 10px;">
+    {%- for job in experience -%}
+    <div style="margin-bottom: 5px;">
         <p><b>{{job.role}}</b> – {{job.company}} ({{job.duration}})</p>
         <ul>
-            {% for p in job.points %}
+            {%- for p in job.points -%}
             <li>{{p}}</li>
-            {% endfor %}
+            {%- endfor -%}
         </ul>
     </div>
-    {% endfor %}
-</div>
-{% endif %}
-
-{% if certifications and certifications|length > 0 %}
-<div class="section">
-    <div class="title">CERTIFICATIONS</div>
-    <ul>
-        {% for c in certifications %}
-        <li>{{c}}</li>
-        {% endfor %}
-    </ul>
-</div>
-{% endif %}
-
-{% if strengths and strengths|length > 0 %}
-<div class="section">
-    <div class="title">STRENGTHS</div>
-    <ul>
-        {% for s in strengths %}
-        <li>{{s}}</li>
-        {% endfor %}
-    </ul>
+    {%- endfor -%}
 </div>
 {% endif %}
 
 <div class="section">
     <div class="title">PERSONAL DETAILS</div>
-    <ul>
-        {% if father_name %}<li><b>Father's Name:</b> {{father_name}}</li>{% endif %}
-        <li><b>Date of Birth:</b> {{dob}}</li>
-        <li><b>Languages:</b> {{languages}}</li>
-        <li><b>Hobbies:</b> {{hobbies}}</li>
-    </ul>
+    <p><b>Father's Name:</b> {{father_name}}</p>
+    <p><b>Date of Birth:</b> {{dob}}</p>
+    <p><b>Languages:</b> {{languages}}</p>
+    <p><b>Hobbies:</b> {{hobbies}}</p>
 </div>
 
 <div class="section">
@@ -204,11 +152,7 @@ p { margin: 5px 0; }
     <p>I hereby declare that the information provided above is true and accurate to the best of my knowledge.</p>
 </div>
 
-<div class="footer">
-    {{name}}
-</div>
+<div class="footer">{{name}}</div>
 
 </body>
 </html>
-
-
