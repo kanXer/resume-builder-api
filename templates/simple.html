@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<style>
+:root {
+    /* Python se aane wala dynamic size */
+    --base-size: {{ base_font_size if base_font_size else '12pt' }};
+    
+    /* Content density ke basis par spacing control */
+    {% if section_spacing == 'high' %}
+        --section-margin: 24px;
+        --item-spacing: 10px;
+        --line-height: 1.6;
+        --top-margin: 15mm;
+    {% elif section_spacing == 'medium' %}
+        --section-margin: 16px;
+        --item-spacing: 6px;
+        --line-height: 1.4;
+        --top-margin: 10mm;
+    {% else %}
+        --section-margin: 10px;
+        --item-spacing: 3px;
+        --line-height: 1.2;
+        --top-margin: 7mm;
+    {% endif %}
+}
+
+@page {
+    size: A4;
+    /* Side margins ko balance rakha hai */
+    margin: var(--top-margin) 15mm 12mm 15mm;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    font-size: var(--base-size);
+    line-height: var(--line-height);
+    color: #000;
+}
+
+h1 {
+    margin-top: 0; /* Top white space fix */
+    margin-bottom: 4px;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: calc(var(--base-size) + 6pt);
+}
+
+.header {
+    text-align: center;
+    margin-bottom: var(--section-margin);
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+}
+
+.name {
+    font-weight: bold;
+    font-size: calc(var(--base-size) + 2pt);
+}
+
+.section {
+    margin-top: var(--section-margin);
+    /* Prevent section from breaking between pages */
+    page-break-inside: avoid;
+}
+
+.title {
+    font-weight: bold;
+    font-size: var(--base-size);
+    border-bottom: 1.5px solid #444;
+    padding-bottom: 2px;
+    margin-bottom: var(--item-spacing);
+    text-transform: uppercase;
+    color: #222;
+}
+
+ul {
+    margin: 5px 0 0 20px;
+    padding: 0;
+}
+
+li {
+    margin-bottom: calc(var(--item-spacing) / 2);
+}
+
+p { margin: 5px 0; }
+
+.footer {
+    margin-top: 20px;
+    text-align: right;
+    font-size: 10pt;
+    color: #666;
+    border-top: 1px solid #eee;
+    padding-top: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<h1 class="name">Resume</h1>
+
+<div class="header">
+    <div class="name"><b>{{name}}</b></div>
+    <div class="address">
+        {{address_line1}}
+        {% if address_line2 %}<br>{{address_line2}}{% endif %}
+    </div>
+    <div class="contact">
+        Mob: {{phone}} | Email: {{email}} 
+        {% if github %}
+        <span class="contact-item"> | 🔗 Github: {{github}}</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="section">
+    <div class="title">CAREER OBJECTIVE</div>
+    <p>{{objective}}</p>
+</div>
+
+<div class="section">
+    <div class="title">EDUCATION</div>
+    <ul>
+        {% for edu in education %}
+        <li>
+            <b>{{edu.degree}}</b>, {{edu.college}}, {{edu.year}} – {{edu.score}}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% if skills and skills is iterable %}
+    {% set ns = namespace(has_data=false) %}
+    {% for s in skills %}{% if s and s|string|trim %}{% set ns.has_data = true %}{% endif %}{% endfor %}
+
+    {% if ns.has_data %}
+    <div class="section">
+        <div class="title">TECHNICAL SKILLS</div>
+        <ul>
+            {% for skill in skills %}
+                {% if skill and skill|string|trim %}
+                    <li>{{ skill }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+{% endif %}
+{% if experience and experience|length > 0 %}
+<div class="section">
+    <div class="title">WORK EXPERIENCE</div>
+    {% for job in experience %}
+    <div style="margin-bottom: 10px;">
+        <p><b>{{job.role}}</b> – {{job.company}} ({{job.duration}})</p>
+        <ul>
+            {% for p in job.points %}
+            <li>{{p}}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if certifications and certifications|length > 0 %}
+<div class="section">
+    <div class="title">CERTIFICATIONS</div>
+    <ul>
+        {% for c in certifications %}
+        <li>{{c}}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if strengths and strengths|length > 0 %}
+<div class="section">
+    <div class="title">STRENGTHS</div>
+    <ul>
+        {% for s in strengths %}
+        <li>{{s}}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="section">
+    <div class="title">PERSONAL DETAILS</div>
+    <ul>
+        {% if father_name %}<li><b>Father's Name:</b> {{father_name}}</li>{% endif %}
+        <li><b>Date of Birth:</b> {{dob}}</li>
+        <li><b>Languages:</b> {{languages}}</li>
+        <li><b>Hobbies:</b> {{hobbies}}</li>
+    </ul>
+</div>
+
+<div class="section">
+    <div class="title">DECLARATION</div>
+    <p>I hereby declare that the information provided above is true and accurate to the best of my knowledge.</p>
+</div>
+
+<div class="footer">
+    {{name}}
+</div>
+
+</body>
+</html>
