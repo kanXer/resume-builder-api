@@ -120,7 +120,7 @@ p {
 <div class="section">
     <div class="title">TECHNICAL SKILLS</div>
     <p>{{ skills | join(', ') }}</p> 
-    </div>
+</div>
 {% endif %}
 
 {% if experience %}
@@ -136,6 +136,28 @@ p {
         </ul>
     </div>
     {%- endfor -%}
+</div>
+{% endif %}
+
+{% if certifications %}
+<div class="section">
+    <div class="title">CERTIFICATIONS</div>
+    <ul>
+        {%- for c in certifications -%}
+        <li>{{c}}</li>
+        {%- endfor -%}
+    </ul>
+</div>
+{% endif %}
+
+{% if strengths %}
+<div class="section">
+    <div class="title">STRENGTHS</div>
+    <ul>
+        {%- for s in strengths -%}
+        <li>{{s}}</li>
+        {%- endfor -%}
+    </ul>
 </div>
 {% endif %}
 
