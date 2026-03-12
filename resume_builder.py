@@ -24,7 +24,7 @@ def calculate_dynamic_layout(data):
 
     if char_count > 1800:
         return "10.5pt", "low"
-    elif char_count > 1100:
+    elif char_count > 900:
         return "11.5pt", "medium"
     else:
         return "13pt", "high"
@@ -64,4 +64,5 @@ def generate_resume(data):
     file_path = os.path.join("generated_resumes", file_name)
     
     HTML(string=html).write_pdf(file_path)
+
     return file_path
