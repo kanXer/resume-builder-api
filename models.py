@@ -18,6 +18,7 @@ class Education(BaseModel):
 
 class ResumeData(BaseModel):
 
+    template: str
     name: str
     father_name: Optional[str] = None
     address: str

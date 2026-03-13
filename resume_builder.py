@@ -2,19 +2,14 @@ from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 import uuid
 import os
-from ai_objective import generate_objective
+from ai_objective import generate_objective 
 
+# Templates folder ka path set karein
 env = Environment(loader=FileSystemLoader("templates"))
 
 def calculate_dynamic_layout(data):
-    """
-    Logic:
-    - Chars > 1800: Font 10.5pt, low spacing
-    - Chars > 900: Font 11pt, medium spacing
-    - Chars <= 900: Font 12pt, high spacing
-    """
-    text_parts = []
-    text_parts.append(str(data.get("objective") or ""))
+    """Characters count ke basis par font aur spacing decide karein."""
+    text_parts = [str(data.get("objective") or "")]
     
     for job in data.get("experience", []):
         text_parts.append(str(job.get("role") or "") + str(job.get("company") or ""))
@@ -26,43 +21,75 @@ def calculate_dynamic_layout(data):
 
     if char_count > 1800:
         return "10pt", "low"
-    elif char_count > 900:
-        return "12pt", "medium"
+    elif char_count > 1100:
+        return "11pt", "medium"
     else:
-        return "13.5pt", "high"
+        return "12pt", "high"
 
 def generate_resume(data):
-    # --- 1. CLEANUP LOGIC ---
-    if data.get("skills"):
-        data["skills"] = [s for s in data["skills"] if s and str(s).strip()]
-    else:
-        data["skills"] = []
+    # --- 1. CLEANUP & SANITIZATION ---
+    list_fields = ["skills", "strengths", "certifications"]
+    for field in list_fields:
+        if data.get(field):
+            data[field] = [item for item in data[field] if item and str(item).strip()]
+        else:
+            data[field] = []
 
-    # --- 2. AI OBJECTIVE LOGIC ---
+    # Education cleanup
+    if data.get("education"):
+        data["education"] = [edu for edu in data["education"] if edu.get("college") or edu.get("degree")]
+
+    # --- 2. ADDRESS SPLITTING LOGIC ---
+    # Isse address do lines mein split ho jayega agar 50 char se bada hai
+    full_address = data.get("address", "")
+    split_limit = 50 
+    
+    if len(full_address) > split_limit:
+        # Last space dhoondhte hain taaki word na kate
+        last_space = full_address.rfind(' ', 0, split_limit)
+        if last_space == -1: last_space = split_limit
+        
+        data["address_line1"] = full_address[:last_space].strip()
+        data["address_line2"] = full_address[last_space:].strip()
+    else:
+        data["address_line1"] = full_address
+        data["address_line2"] = None
+
+    # --- 3. AI OBJECTIVE LOGIC ---
     if not data.get("objective") or str(data["objective"]).strip() == "":
         skills_str = ", ".join(data.get("skills", []))
         try:
             data["objective"] = generate_objective(skills_str)
         except Exception as e:
-            data["objective"] = "Focused professional with a strong technical background."
+            print(f"AI Generation failed: {e}")
+            data["objective"] = "Aspiring professional with strong technical expertise looking to contribute to innovative projects."
 
-    # --- 3. DYNAMIC LAYOUT ---
-    font_size, spacing_status = calculate_dynamic_layout(data)
+    # --- 4. DYNAMIC LAYOUT ---
+    font_size, spacing = calculate_dynamic_layout(data)
     data["base_font_size"] = font_size
-    data["section_spacing"] = spacing_status  # Yahan status (low/medium/high) jayega
+    data["section_spacing"] = spacing
 
-    # --- 4. RENDERING ---
-    template = env.get_template("simple.html")
-    html = template.render(**data)
+    # --- 5. TEMPLATE IMPLEMENTATION ---
+    template_id = data.get("template", "template1") 
+    template_file = f"{template_id}.html"
 
-    if not os.path.exists("generated_resumes"):
-        os.makedirs("generated_resumes")
+    try:
+        template = env.get_template(template_file)
+    except Exception:
+        # Fallback agar file na mile
+        template = env.get_template("template1.html")
+
+    html_out = template.render(**data)
+
+    # --- 6. PDF GENERATION ---
+    output_dir = "generated_resumes"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
         
     file_name = f"resume_{uuid.uuid4().hex}.pdf"
-    file_path = os.path.join("generated_resumes", file_name)
+    file_path = os.path.join(output_dir, file_name)
     
-    HTML(string=html).write_pdf(file_path)
-
+    # WeasyPrint conversion
+    HTML(string=html_out).write_pdf(file_path)
+    
     return file_path
-
-
