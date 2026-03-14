@@ -40,12 +40,10 @@ def generate_resume(data):
         data["education"] = [edu for edu in data["education"] if edu.get("college") or edu.get("degree")]
 
     # --- 2. ADDRESS SPLITTING LOGIC ---
-    # Isse address do lines mein split ho jayega agar 50 char se bada hai
     full_address = data.get("address", "")
     split_limit = 50 
     
     if len(full_address) > split_limit:
-        # Last space dhoondhte hain taaki word na kate
         last_space = full_address.rfind(' ', 0, split_limit)
         if last_space == -1: last_space = split_limit
         
@@ -69,14 +67,26 @@ def generate_resume(data):
     data["base_font_size"] = font_size
     data["section_spacing"] = spacing
 
-    # --- 5. TEMPLATE IMPLEMENTATION ---
-    template_id = data.get("template", "template1") 
-    template_file = f"{template_id}.html"
+    # --- 5. TEMPLATE IMPLEMENTATION (FIXED) ---
+    # Hum id le rahe hain aur check kar rahe hain ki wo "1" hai ya "template1"
+    raw_template_id = str(data.get("template", "1"))
+    
+    # Cleaning: Agar frontend se "template1.html" ya sirf "1" aaye, hume sirf number chahiye
+    clean_id = raw_template_id.replace("template", "").replace(".html", "").strip()
+    
+    # Final file name generate karna (Taki templates/template1.html dhoonda ja sake)
+    template_file = f"template{clean_id}.html"
+
+    print(f"--- DEBUG LOG ---")
+    print(f"Raw Template ID from Frontend: {raw_template_id}")
+    print(f"Cleaned ID: {clean_id}")
+    print(f"Targeting File: {template_file}")
 
     try:
         template = env.get_template(template_file)
-    except Exception:
-        # Fallback agar file na mile
+    except Exception as e:
+        print(f"ERROR: Template {template_file} not found. Error: {e}")
+        # Agar error aaye toh template1.html as a fallback load karein
         template = env.get_template("template1.html")
 
     html_out = template.render(**data)
