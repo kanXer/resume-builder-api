@@ -4,198 +4,173 @@
     <meta charset="UTF-8">
     <style>
         :root {
-            --primary-color: #1a2a6c;
-            --text-dark: #2c3e50;
-            --text-light: #516173;
-            --sidebar-bg: #f8f9fa;
-            --base-font: {{ base_font_size if base_font_size else '11pt' }};
+            /* Python configs se aane wala dynamic font */
+            --base-font: {{ base_font_size if base_font_size else '13pt' }};
+            --primary-blue: #1a2a6c;
+            --section-bg: #eef2f7;
+
+            /* 8-Stage Smooth Scaling Logic */
+            {% if section_spacing == 'vhigh' %}
+                --section-margin: 32px;
+                --item-gap: 15px;
+                --line-height: 1.75;
+                --top-margin: 25mm;
+            {% elif section_spacing == 'high' %}
+                --section-margin: 24px;
+                --item-gap: 10px;
+                --line-height: 1.6;
+                --top-margin: 20mm;
+            {% elif section_spacing == 'medium' %}
+                --section-margin: 16px;
+                --item-gap: 6px;
+                --line-height: 1.4;
+                --top-margin: 15mm;
+            {% else %}
+                --section-margin: 8px;
+                --item-gap: 2px;
+                --line-height: 1.2;
+                --top-margin: 8mm;
+            {% endif %}
         }
 
-        @page { size: A4; margin: 0; }
+        @page { 
+            size: A4; 
+            margin: var(--top-margin) 18mm 12mm 18mm; 
+        }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0; padding: 0;
-            color: var(--text-dark);
+            color: #333;
             font-size: var(--base-font);
-            line-height: 1.4;
-            width: 100%;
+            line-height: var(--line-height);
         }
 
-        /* Top Bar for CV Title */
-        .cv-header {
-            text-align: center;
-            font-size: 1.2em;
-            font-weight: bold;
-            letter-spacing: 2px;
-            color: var(--text-light);
+        /* HEADER (Matches Image) */
+        .header { text-align: center; margin-bottom: var(--section-margin); }
+        .name-title {
+            font-size: 2.2em; font-weight: 800;
+            color: var(--primary-blue);
             text-transform: uppercase;
-            padding-top: 20px;
-            margin-bottom: -10px;
+            margin: 0; letter-spacing: 1px;
+        }
+        .contact-row {
+            display: flex; justify-content: center; align-items: center;
+            gap: 12px; margin-top: 8px; font-weight: 500; font-size: 0.9em;
         }
 
-        /* LAYOUT LOGIC */
-        {% if certifications|length > 2 and experience|length > 2 %}
-            body { display: flex; min-height: 297mm; flex-wrap: wrap; }
-            .cv-header { width: 100%; } /* Title top par poori width lega */
-            .sidebar { 
-                width: 32%; background-color: var(--sidebar-bg); 
-                padding: 30px 25px; border-right: 1px solid #eee; 
-                box-sizing: border-box;
-            }
-            .main-content { width: 68%; padding: 30px 35px; box-sizing: border-box; }
-            .section-title { border-bottom: 2px solid var(--primary-color); padding-bottom: 5px; }
-        {% else %}
-            .sidebar { display: none; }
-            .main-content { 
-                width: 100%; padding: 30px 60px; 
-                box-sizing: border-box;
-            }
-            .section-title { 
-                border-left: 5px solid var(--primary-color); background: #f4f7f9; 
-                padding: 5px 15px; border-bottom: none; 
-            }
-            .name-header, .contact-header { text-align: center; }
-            .contact-info { justify-content: center; border-bottom: none !important; margin-bottom: 5px !important; }
-        {% endif %}
-
-        .section-title {
-            color: var(--primary-color);
-            font-weight: 800; font-size: 1.1em;
+        /* SECTION HEADERS (Matches Image) */
+        .section { margin-top: var(--section-margin); page-break-inside: avoid; }
+        .section-header {
+            background-color: var(--section-bg);
+            border-left: 5px solid var(--primary-blue);
+            padding: 6px 15px;
+            font-weight: 800;
+            font-size: 1em;
+            color: var(--primary-blue);
             text-transform: uppercase;
-            margin: 20px 0 10px 0;
+            margin-bottom: var(--item-gap);
         }
 
-        .name-header {
-            font-size: 2.4em; font-weight: 900;
-            color: var(--primary-color);
-            text-transform: uppercase;
-            margin: 5px 0;
-        }
-
-        .contact-info { 
-            display: flex; gap: 15px; flex-wrap: wrap; 
-            font-size: 0.9em; padding: 5px 0;
-        }
-
+        /* SKILL BADGES */
         .skill-badge {
             display: inline-block;
-            background: #eef2f7; padding: 4px 10px;
-            border-radius: 4px; font-size: 0.85em;
-            font-weight: bold; color: var(--primary-color);
-            margin: 2px;
+            background: #d1d9e6; padding: 4px 12px;
+            border-radius: 20px; font-size: 0.85em;
+            font-weight: bold; color: var(--primary-blue);
+            margin: 3px;
         }
 
         .item-row { display: flex; justify-content: space-between; font-weight: bold; }
-        .declaration { margin-top: 30px; border-top: 1px dotted #ccc; padding-top: 10px; font-size: 0.85em; }
-        ul { padding-left: 20px; margin: 5px 0; }
+        
+        ul { padding-left: 20px; margin: 4px 0; }
+        li { margin-bottom: calc(var(--item-gap) / 2); }
+
+        .personal-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; font-size: 0.95em;
+        }
+
+        .declaration { margin-top: 25px; font-style: normal; }
+        .footer-name { margin-top: 10px; font-weight: bold; font-size: 1.1em; }
     </style>
 </head>
 <body>
 
-    <div class="cv-header">Curriculum Vitae</div>
-
-    {% if certifications|length > 2 and experience|length > 2 %}
-    <div class="sidebar">
-        <div class="section-title" style="margin-top: 0;">Contact</div>
-        <div style="font-size: 0.9em; line-height: 1.6;">
-            {% if address_line1 %}<div>📍 {{address_line1}}</div>{% endif %}
-            {% if address_line2 %}<div>&nbsp;&nbsp;&nbsp;{{address_line2}}</div>{% endif %}
-            <div>📞 {{phone}}</div>
-            <div>📧 {{email}}</div>
-            {% if github and github != "None" %}<div>🔗 {{github}}</div>{% endif %}
+    <div class="header">
+        <h1 class="name-title">{{name}}</h1>
+        <div class="contact-row" style="margin-bottom: 5px;">
+            📍 {{address_line1}} {% if address_line2 %}, {{address_line2}}{% endif %}
         </div>
+        <div class="contact-row">
+            📞 {{phone}} | ✉️ {{email}}
+            {% if github %} | 🔗 {{github}}{% endif %}
+        </div>
+    </div>
 
-        {% if skills %}
-        <div class="section-title">Skills</div>
-        {% for s in skills %}<span class="skill-badge">{{s}}</span>{% endfor %}
-        {% endif %}
+    <div class="section">
+        <div class="section-header">Career Objective</div>
+        <div style="padding: 0 5px;">{{objective}}</div>
+    </div>
 
-        {% if strengths %}
-        <div class="section-title">Strengths</div>
-        <ul>{% for s in strengths %}<li>{{s}}</li>{% endfor %}</ul>
-        {% endif %}
+    <div class="section">
+        <div class="section-header">Education</div>
+        {% for edu in education %}
+        <div style="margin-bottom: 8px; padding: 0 5px;">
+            <div class="item-row"><span>{{edu.degree}}</span><span>{{edu.year}}</span></div>
+            <div style="font-size: 0.9em; color: #555;">{{edu.college}} | <b>Score: {{edu.score}}</b></div>
+        </div>
+        {% endfor %}
+    </div>
 
-        <div class="section-title">Personal Info</div>
-        <div style="font-size: 0.9em;">
-            {% if father_name %}<div><b>Father:</b> {{father_name}}</div>{% endif %}
-            <div><b>DOB:</b> {{dob}}</div>
-            <div><b>Languages:</b> {{languages}}</div>
+    {% if skills %}
+    <div class="section">
+        <div class="section-header">Technical Skills</div>
+        <div style="padding: 0 5px;">
+            {% for s in skills %}<span class="skill-badge">{{s}}</span>{% endfor %}
         </div>
     </div>
     {% endif %}
 
-    <div class="main-content">
-        <h1 class="name-header">{{name}}</h1>
-
-        {% if certifications|length <= 2 or experience|length <= 2 %}
-        <div class="contact-header">
-            <div class="contact-info" style="font-weight: bold; margin-bottom: 0;">
-                <span>📍 Add:</span>
-                <span>{{address_line1}}{% if address_line2 %}, {{address_line2}}{% endif %}</span>
-            </div>
-            <div class="contact-info" style="border-bottom: 1px solid #eee !important; padding-bottom: 10px !important;">
-                <span>📞 {{phone}}</span> | <span>📧 {{email}}</span>
-                {% if github and github != "None" %} | <span>🔗 {{github}}</span>{% endif %}
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="section-title" style="margin-top: 10px;">Career Objective</div>
-        <div style="font-style: italic; color: var(--text-light);">{{objective}}</div>
-
-        <div class="section-title">Education</div>
-        {% for edu in education %}
-        <div style="margin-bottom: 10px;">
-            <div class="item-row"><span>{{edu.degree}}</span><span>{{edu.year}}</span></div>
-            <div style="font-size: 0.95em;">{{edu.college}} | <span style="font-weight: bold; color: var(--primary-color);">Score: {{edu.score}}</span></div>
-        </div>
-        {% endfor %}
-
-        {% if certifications|length <= 2 or experience|length <= 2 %}
-            {% if skills %}
-            <div class="section-title">Technical Skills</div>
-            <div>{% for s in skills %}<span class="skill-badge">{{s}}</span>{% endfor %}</div>
-            {% endif %}
-
-            {% if strengths %}
-            <div class="section-title">Strengths</div>
-            <ul style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">
-                {% for s in strengths %}<li>{{s}}</li>{% endfor %}
-            </ul>
-            {% endif %}
-        {% endif %}
-
-        {% if experience %}
-        <div class="section-title">Work Experience</div>
+    {% if experience %}
+    <div class="section">
+        <div class="section-header">Experience / Projects</div>
         {% for job in experience %}
-        <div style="margin-bottom: 15px;">
+        <div style="margin-bottom: 12px; padding: 0 5px;">
             <div class="item-row"><span>{{job.role}}</span><span>{{job.duration}}</span></div>
-            <div style="font-style: italic; color: var(--primary-color);">{{job.company}}</div>
-            <ul>{% for p in job.points %}<li>{{p}}</li>{% endfor %}</ul>
+            <div style="font-style: italic; color: var(--primary-blue); font-size: 0.9em;">{{job.company}}</div>
+            <ul>
+                {% for p in job.points %}{% if p|trim %}<li>{{p}}</li>{% endif %}{% endfor %}
+            </ul>
         </div>
         {% endfor %}
-        {% endif %}
+    </div>
+    {% endif %}
 
-        {% if certifications %}
-        <div class="section-title">Certifications</div>
-        <ul>{% for c in certifications %}<li>{{c}}</li>{% endfor %}</ul>
-        {% endif %}
+    {% if certifications %}
+    <div class="section">
+        <div class="section-header">Certifications</div>
+        <ul style="padding: 0 5px 0 25px;">
+            {% for c in certifications %}
+            <li><b>{{c.title}}</b> &ndash; {{c.organization}} ({{c.year}})</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
 
-        {% if certifications|length <= 2 or experience|length <= 2 %}
-        <div class="section-title">Personal Details</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 0.95em;">
-            {% if father_name %}<div><b>Father:</b> {{father_name}}</div>{% endif %}
-            <div><b>DOB:</b> {{dob}}</div>
+    <div class="section">
+        <div class="section-header">Personal Details</div>
+        <div class="personal-grid" style="padding: 0 5px;">
+            <div><b>Father's Name:</b> {{father_name}}</div>
+            <div><b>Date of Birth:</b> {{dob}}</div>
             <div><b>Languages:</b> {{languages}}</div>
             <div><b>Hobbies:</b> {{hobbies}}</div>
         </div>
-        {% endif %}
+    </div>
 
-        <div class="declaration">
-            <p>I hereby declare that the information provided above is true to the best of my knowledge.</p>
-            <div style="margin-top: 5px; font-weight: bold; font-size: 1.1em;">{{name}}</div>
-        </div>
+    <div class="section">
+        <p class="declaration">I hereby declare that the information provided above is true and accurate to the best of my knowledge.</p>
+        <div class="footer-name">{{name}}</div>
     </div>
 
 </body>

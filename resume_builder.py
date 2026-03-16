@@ -1,59 +1,70 @@
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 from weasyprint import HTML
 import uuid
 import os
+import pypdf
 from ai_objective import generate_objective 
 
-# Templates folder ka path set karein
+# Templates folder setup
 env = Environment(loader=FileSystemLoader("templates"))
 
-def calculate_dynamic_layout(data):
-    """Characters count ke basis par font aur spacing decide karein."""
-    text_parts = [str(data.get("objective") or "")]
-    
-    for job in data.get("experience", []):
-        text_parts.append(str(job.get("role") or "") + str(job.get("company") or ""))
-        text_parts.extend([str(p) for p in job.get("points", []) if p])
-    
-    text_parts.extend([str(s) for s in data.get("skills", []) if s])
-    
-    char_count = len(" ".join(text_parts))
-
-    if char_count > 1800:
-        return "10pt", "low"
-    elif char_count > 1100:
-        return "11pt", "medium"
-    else:
-        return "12pt", "high"
+def get_page_count(file_path):
+    """PDF ke total pages count karta hai."""
+    try:
+        with open(file_path, "rb") as f:
+            reader = pypdf.PdfReader(f)
+            return len(reader.pages)
+    except Exception as e:
+        print(f"Error checking page count: {e}")
+        return 1
 
 def generate_resume(data):
-    # --- 1. CLEANUP & SANITIZATION ---
-    list_fields = ["skills", "strengths", "certifications"]
-    for field in list_fields:
-        if data.get(field):
-            data[field] = [item for item in data[field] if item and str(item).strip()]
-        else:
-            data[field] = []
+    # --- 1. DATA CLEANUP & SANITIZATION ---
+    for field in ["skills", "strengths"]:
+        data[field] = [item for item in data.get(field, []) if item and str(item).strip()]
+    
+    if data.get("certifications"):
+        data["certifications"] = [c for c in data["certifications"] if c.get("title") and str(c.get("title")).strip()]
+    else:
+        data["certifications"] = []
 
-    # Education cleanup
     if data.get("education"):
         data["education"] = [edu for edu in data["education"] if edu.get("college") or edu.get("degree")]
 
-    # --- 2. ADDRESS SPLITTING LOGIC ---
+    # --- 2. TEMPLATE SELECTION (Frontend Se Aane Wala Name) ---
+    # Default template agar kuch na mile
+    DEFAULT_TEMPLATE = "template1.html"
+    
+    # Frontend se template name nikalna
+    requested_template = data.get("template", DEFAULT_TEMPLATE).strip()
+
+    # Extension check aur fix
+    if not requested_template.lower().endswith(".html"):
+        requested_template += ".html"
+
+    try:
+        template = env.get_template(requested_template)
+        print(f"Loading Template: {requested_template}")
+    except TemplateNotFound:
+        print(f"Warning: {requested_template} nahi mila. Using {DEFAULT_TEMPLATE}")
+        template = env.get_template(DEFAULT_TEMPLATE)
+    except Exception as e:
+        print(f"Template error: {e}")
+        template = env.get_template(DEFAULT_TEMPLATE)
+
+    # --- 3. ADDRESS SPLITTING LOGIC ---
     full_address = data.get("address", "")
     split_limit = 50 
-    
     if len(full_address) > split_limit:
         last_space = full_address.rfind(' ', 0, split_limit)
         if last_space == -1: last_space = split_limit
-        
         data["address_line1"] = full_address[:last_space].strip()
         data["address_line2"] = full_address[last_space:].strip()
     else:
         data["address_line1"] = full_address
         data["address_line2"] = None
 
-    # --- 3. AI OBJECTIVE LOGIC ---
+    # --- 4. AI OBJECTIVE LOGIC ---
     if not data.get("objective") or str(data["objective"]).strip() == "":
         skills_str = ", ".join(data.get("skills", []))
         try:
@@ -62,44 +73,48 @@ def generate_resume(data):
             print(f"AI Generation failed: {e}")
             data["objective"] = "Aspiring professional with strong technical expertise looking to contribute to innovative projects."
 
-    # --- 4. DYNAMIC LAYOUT ---
-    font_size, spacing = calculate_dynamic_layout(data)
-    data["base_font_size"] = font_size
-    data["section_spacing"] = spacing
+    # --- 5. AUTO-FIT LOOP ---
+    configs = [
+        {"font": "16pt", "spacing": "vhigh"},
+        {"font": "15pt", "spacing": "vhigh"},
+        {"font": "14pt", "spacing": "high"},
+        {"font": "13pt", "spacing": "high"},
+        {"font": "12pt", "spacing": "medium"},
+        {"font": "11pt", "spacing": "medium"},
+        {"font": "10.5pt", "spacing": "low"},
+        {"font": "10pt", "spacing": "low"}
+    ]
 
-    # --- 5. TEMPLATE IMPLEMENTATION (FIXED) ---
-    # Hum id le rahe hain aur check kar rahe hain ki wo "1" hai ya "template1"
-    raw_template_id = str(data.get("template", "1"))
-    
-    # Cleaning: Agar frontend se "template1.html" ya sirf "1" aaye, hume sirf number chahiye
-    clean_id = raw_template_id.replace("template", "").replace(".html", "").strip()
-    
-    # Final file name generate karna (Taki templates/template1.html dhoonda ja sake)
-    template_file = f"template{clean_id}.html"
-
-    print(f"--- DEBUG LOG ---")
-    print(f"Raw Template ID from Frontend: {raw_template_id}")
-    print(f"Cleaned ID: {clean_id}")
-    print(f"Targeting File: {template_file}")
-
-    try:
-        template = env.get_template(template_file)
-    except Exception as e:
-        print(f"ERROR: Template {template_file} not found. Error: {e}")
-        # Agar error aaye toh template1.html as a fallback load karein
-        template = env.get_template("template1.html")
-
-    html_out = template.render(**data)
-
-    # --- 6. PDF GENERATION ---
     output_dir = "generated_resumes"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+
+    last_generated_path = ""
+
+    for config in configs:
+        data["base_font_size"] = config["font"]
+        data["section_spacing"] = config["spacing"]
+
+        html_out = template.render(**data)
         
-    file_name = f"resume_{uuid.uuid4().hex}.pdf"
-    file_path = os.path.join(output_dir, file_name)
-    
-    # WeasyPrint conversion
-    HTML(string=html_out).write_pdf(file_path)
-    
-    return file_path
+        file_name = f"resume_{uuid.uuid4().hex}.pdf"
+        current_path = os.path.join(output_dir, file_name)
+        
+        HTML(string=html_out).write_pdf(current_path)
+
+        # Optimization: Pichli file delete karo agar wo fit nahi hui thi
+        if last_generated_path and os.path.exists(last_generated_path):
+            try:
+                os.remove(last_generated_path)
+            except:
+                pass
+        
+        last_generated_path = current_path
+        
+        # Check if it fits on 1 page
+        if get_page_count(current_path) == 1:
+            print(f"Success: Resume fit on 1 page with {config['font']} font.")
+            return current_path
+
+    print("Warning: Content too long. Returning 10pt version (multiple pages).")
+    return last_generated_path

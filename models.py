@@ -1,13 +1,11 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-
 class Experience(BaseModel):
     company: str
     role: str
     duration: str
     points: List[str]
-
 
 class Education(BaseModel):
     college: str
@@ -15,9 +13,14 @@ class Education(BaseModel):
     year: str
     score: str
 
+# --- Naya Certification Model ---
+class Certification(BaseModel):
+    title: str
+    organization: str
+    year: str
+    link: Optional[str] = None
 
 class ResumeData(BaseModel):
-
     template: str
     name: str
     father_name: Optional[str] = None
@@ -31,7 +34,9 @@ class ResumeData(BaseModel):
     hobbies: str
 
     strengths: List[str]
-    certifications: List[str]
+    
+    # --- Yahan Change Kiya Hai ---
+    certifications: List[Certification] 
 
     education: List[Education]
 
